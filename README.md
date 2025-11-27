@@ -17,7 +17,7 @@ LAMA | [Download](https://dl.fbaipublicfiles.com/LAMA/data.zip) | The four LAMA 
 ## Experiments on Bias Mitigation
 The scripts to run the debiasing experiments are in `scripts/${bias_type`, where `${bias_type}` $\in$ {`gender`,`race`,`religion`}.
 
-For example, to mitigate gender bias in GPT-2 with adapter tuning, copy the script `scripts/gender/run_gpt2_adapter_rf48.sh` to and run it from the root directory of this project. Please note that all the scripts adopt a default seed of 42, and you can change the `--seed` argument to use other seeds.
+For example, to mitigate gender bias in GPT-2 with adapter tuning, copy the script `scripts/gender/run_gpt2_adapter_rf48.sh` to and run it from the root directory of this project. Please note that all the scripts adopt a default seed of 42, and you can change the `--seed` argument to use other seeds. The causal language modeling pipeline now falls back to Hugging Face auto-models when an architecture-specific debiasing head is unavailable, enabling fair fine-tuning of instruction-tuned models such as `meta-llama/Meta-Llama-3-8B-Instruct`, `meta-llama/Llama-3.2-1B-Instruct`, or `google/gemma-2-2b-it` without additional code changes.
 
 The bash commands to evaluate the CrowS-Pairs stereotype score, StereoSet stereotype score, WikiText-2 perplexity and StereoSet LM score are in `scripts/evaluate_${bias_type}.sh`. Run the commands therein from the root directory of this project to get the evaluation results.
 
