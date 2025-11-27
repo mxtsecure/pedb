@@ -4,12 +4,14 @@ from collections.abc import Mapping
 from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
 
 from transformers import (
-	AutoConfig,
-	BertForPreTraining,
-	AutoModelForMaskedLM,
-	AutoModelForSequenceClassification,
-	DataCollatorForLanguageModeling
-	)
+        AutoConfig,
+        AutoModelForCausalLM,
+        BertForPreTraining,
+        AutoModelForMaskedLM,
+        AutoModelForSequenceClassification,
+        AutoModelForMultipleChoice,
+        DataCollatorForLanguageModeling
+        )
 
 from model.bert_mlm import (
 	BertForMaskedLM,
@@ -87,16 +89,16 @@ PROMPTING_MODELS = {
 
 
 BASE_MODELS = {
-	'bert':{
-		TaskType.MASKED_LM: BertForMaskedLM,
-		TaskType.CAUSAL_LM: None,
-		TaskType.MULTIPLE_CHOICE: BertForMultipleChoiceMaskedLM,
-	},
-	'gpt2':{
-		TaskType.MASKED_LM: None,
-		TaskType.CAUSAL_LM: GPT2LMHeadModel,
-		TaskType.MULTIPLE_CHOICE: GPT2MultipleChoiceLMHeadModel,
-	}
+        'bert':{
+                TaskType.MASKED_LM: BertForMaskedLM,
+                TaskType.CAUSAL_LM: None,
+                TaskType.MULTIPLE_CHOICE: BertForMultipleChoiceMaskedLM,
+        },
+        'gpt2':{
+                TaskType.MASKED_LM: None,
+                TaskType.CAUSAL_LM: GPT2LMHeadModel,
+                TaskType.MULTIPLE_CHOICE: GPT2MultipleChoiceLMHeadModel,
+        }
 }
 
 
@@ -110,21 +112,38 @@ def get_model(model_args, config: AutoConfig, fix_bert: bool = False):
 		config.hidden_dropout_prob = model_args.hidden_dropout_prob
 		config.pre_seq_len = model_args.pre_seq_len
 		config.prefix_projection = model_args.prefix_projection
-		config.prefix_hidden_size = model_args.prefix_hidden_size
-		config.prefix_tokens = model_args.prefix_tokens
-		model_class = PREFIXTUNE_MODELS[config.model_type][task_type]
+                config.prefix_hidden_size = model_args.prefix_hidden_size
+                config.prefix_tokens = model_args.prefix_tokens
+                model_class = PREFIXTUNE_MODELS.get(config.model_type, {}).get(task_type)
 
-	elif model_args.prompt_model=='prompt_tuning':
-		config.pre_seq_len = model_args.pre_seq_len
-		config.prefix_tokens = model_args.prefix_tokens
-		model_class = PROMPTTUNE_MODELS[config.model_type][task_type]
-		
-	elif model_args.prompt_model=='prompting':
-		config.prefix_tokens = model_args.prefix_tokens
-		model_class = PROMPTING_MODELS[config.model_type][task_type]
-	else:
-		assert model_args.prompt_model=='none'
-		model_class = BASE_MODELS[config.model_type][task_type]
+        elif model_args.prompt_model=='prompt_tuning':
+                config.pre_seq_len = model_args.pre_seq_len
+                config.prefix_tokens = model_args.prefix_tokens
+                model_class = PROMPTTUNE_MODELS.get(config.model_type, {}).get(task_type)
+
+        elif model_args.prompt_model=='prompting':
+                config.prefix_tokens = model_args.prefix_tokens
+                model_class = PROMPTING_MODELS.get(config.model_type, {}).get(task_type)
+        else:
+                assert model_args.prompt_model=='none'
+                model_class = BASE_MODELS.get(config.model_type, {}).get(task_type)
+
+        if model_class is None:
+                if model_args.prompt_model != 'none':
+                        raise ValueError(
+                                f"Prompt model {model_args.prompt_model} is not supported for "
+                                f"model type {config.model_type} and task {task_type.name.lower()}."
+                        )
+                if task_type == TaskType.CAUSAL_LM:
+                        model_class = AutoModelForCausalLM
+                elif task_type == TaskType.MASKED_LM:
+                        model_class = AutoModelForMaskedLM
+                elif task_type == TaskType.MULTIPLE_CHOICE:
+                        model_class = AutoModelForMultipleChoice
+                elif task_type == TaskType.SEQUENCE_CLASSIFICATION:
+                        model_class = AutoModelForSequenceClassification
+                else:
+                        raise ValueError(f"Unsupported task type: {task_type}")
 
 	if model_args.model_name_or_path:
 		

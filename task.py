@@ -86,9 +86,9 @@ else:
 		"You can do it from another script, save it, and load it from here, using --tokenizer_name.")
 
 # Set padding token.
-if model_args.task_type=="causal_lm" or 'gpt2' in model_args.model_name_or_path:
-	tokenizer.pad_token = tokenizer.eos_token
-	config.pad_token_id = config.eos_token_id
+if model_args.task_type=="causal_lm" and tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        config.pad_token_id = config.eos_token_id if config.eos_token_id is not None else tokenizer.eos_token_id
 
 
 # Load model
