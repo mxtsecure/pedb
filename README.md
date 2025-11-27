@@ -19,6 +19,8 @@ The scripts to run the debiasing experiments are in `scripts/${bias_type`, where
 
 For example, to mitigate gender bias in GPT-2 with adapter tuning, copy the script `scripts/gender/run_gpt2_adapter_rf48.sh` to and run it from the root directory of this project. Please note that all the scripts adopt a default seed of 42, and you can change the `--seed` argument to use other seeds. The causal language modeling pipeline now falls back to Hugging Face auto-models when an architecture-specific debiasing head is unavailable, enabling fair fine-tuning of instruction-tuned models such as `meta-llama/Meta-Llama-3-8B-Instruct`, `meta-llama/Llama-3.2-1B-Instruct`, or `google/gemma-2-2b-it` without additional code changes.
 
+*New:* `scripts/gender/run_meta_llama3_8b_instruct_adapter.sh` provides a ready-made command for adapter-tuning `meta-llama/Meta-Llama-3-8B-Instruct` on the counterfactually augmented Wikipedia corpus to mitigate gender bias. Copy the script to the project root and run it to launch training.
+
 The bash commands to evaluate the CrowS-Pairs stereotype score, StereoSet stereotype score, WikiText-2 perplexity and StereoSet LM score are in `scripts/evaluate_${bias_type}.sh`. Run the commands therein from the root directory of this project to get the evaluation results.
 
 <!--A copy of all the evaluation results from five random seeds (0, 10, 42, 123, 12345) are stored in the dict `results_data` in `permutation_test/data.py`. Run the following command to compute the p-value of the corresponding permutation test:
